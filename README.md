@@ -23,3 +23,9 @@ alias yt-dl='docker run \
                 -v "$(pwd)":/workdir:rw \
                 flandre/yt-dl'
 ```
+
+## localtunnel (ngrok alternative)
+
+```shell
+alias ngrok='docker-compose -f localtunnel/docker-compose.yml up'
+```
