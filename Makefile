@@ -9,3 +9,7 @@ yt-dl/mikenye:
 .PHONY: yt-dl
 yt-dl: yt-dl/build.sh yt-dl/mikenye
 	./yt-dl/build.sh
+
+.PHONY: tmpmail
+tmpmail:
+	./tmpmail/build.sh

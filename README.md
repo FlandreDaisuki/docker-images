@@ -29,3 +29,25 @@ alias yt-dl='docker run \
 ```shell
 alias ngrok='docker-compose -f localtunnel/docker-compose.yml up'
 ```
+
+## tmpmail
+
+```shell
+alias tmpmail-sh='docker run --rm -it flandre/tmpmail sh'
+```
+
+### Usage
+
+```shell
+$ tmpmail-sh
+
+# in container...
+
+$ new
+kudo.akira207@1secmail.net
+
+$ tmpmail
+[ Inbox for kudo.akira207@1secmail.net ]
+
+No new mail
+```
