@@ -27,7 +27,10 @@ alias yt-dl='docker run \
 ## localtunnel (ngrok alternative)
 
 ```shell
-alias ngrok='docker-compose -f localtunnel/docker-compose.yml up'
+alias ngrok-alt='docker run --rm -it \
+  -v "${PWD}:/root/www:ro" \
+  ghcr.io/flandredaisuki/docker-local-static-server \
+  npm run start'
 ```
 
 ## tmpmail
