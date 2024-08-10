@@ -1,5 +1,0 @@
-#!/bin/sh
-
-email=$(curl -s https://api.namefake.com/japanese-japan/random | jq -r '"\(.email_u)\(.height)@1secmail.net"')
-
-tmpmail --generate "$email"
