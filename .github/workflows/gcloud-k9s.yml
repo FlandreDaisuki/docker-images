@@ -14,6 +14,8 @@ on:
     paths:
       - 'gcloud-k9s/**'
       - '.github/workflows/gcloud-k9s.yml'
+    tags:
+      - gcloud-k9s-v**
 
 env:
   REGISTRY: ghcr.io
@@ -47,7 +49,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=match,pattern=v(.*),group=1
+            type=match,pattern=gcloud-k9s-v(.*),group=1
 
       - name: Build and push Docker image
         uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0

@@ -14,6 +14,8 @@ on:
     paths:
       - 'extract/**'
       - '.github/workflows/extract.yml'
+    tags:
+      - extract-v**
 
 env:
   REGISTRY: ghcr.io
