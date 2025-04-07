@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # https://console.cloud.google.com/artifacts/docker/google.com:cloudsdktool/us/gcr.io/google-cloud-cli
-ARG GOOGLE_CLOUD_CLI_VERSION="516.0.0"
+ARG GOOGLE_CLOUD_CLI_VERSION="517.0.0"
 
 FROM gcr.io/google.com/cloudsdktool/google-cloud-cli:${GOOGLE_CLOUD_CLI_VERSION}
 
