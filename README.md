@@ -73,7 +73,6 @@ qrcode-decode() {
     --user "$(id -u):$(id -g)" \
     -v "$(dirname "${image_file}"):/app" \
     ghcr.io/flandredaisuki/docker-images/qrcode \
-    zbarimg -q1 --nodbus "/app/$(basename "${image_file}")" \
-    | sed 's/^QR-Code://'
+    zbarimg -q1 --raw --nodbus "/app/$(basename "${image_file}")"
 }
 ```
