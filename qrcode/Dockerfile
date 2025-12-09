@@ -7,6 +7,7 @@ FROM alpine:${ALPINE_VERSION}
 RUN apk add --no-cache \
   imagemagick \
   libqrencode-tools \
+  libwebp \
   zbar
 
 WORKDIR /app
