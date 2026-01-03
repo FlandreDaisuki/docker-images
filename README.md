@@ -5,6 +5,7 @@ My utility docker images
 - [extract](#extract)
 - [gcloud-k9s](#gcloud-k9s)
 - [qrcode](#qrcode)
+- [virustotal](#virustotal)
 
 ## extract
 
@@ -75,4 +76,23 @@ qrcode-decode() {
     ghcr.io/flandredaisuki/docker-images/qrcode \
     zbarimg -q1 --raw --nodbus "/app/$(basename "${image_file}")"
 }
+```
+
+## virustotal
+
+```sh
+# run once for initialize
+docker run --rm -it \
+  -v "$HOME:/home/user" \
+  ghcr.io/flandredaisuki/docker-images/virustotal \
+  vt init -k "${VT_API_KEY}"
+```
+
+```sh
+alias vt-scan='docker run --rm -it \
+  -u "$(id -u):$(id -g)" \
+  -v "$HOME:/home/user:ro" \
+  -v "$(pwd):/app:ro" \
+  ghcr.io/flandredaisuki/docker-images/virustotal \
+  vt-scan'
 ```

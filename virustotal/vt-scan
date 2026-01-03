@@ -1,0 +1,110 @@
+#!/bin/bash
+
+set -eu -o pipefail
+
+usage() {
+  echo "Usage: $0 <filename> [-s|--silent] [-t|--timeout <seconds>]" >&2
+  exit 1
+}
+
+FILE=""
+SILENT=false
+TIMEOUT=60 # Default timeout in seconds
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -s|--silent)
+      SILENT=true
+      shift
+      ;;
+    -t|--timeout)
+      if [[ -n "${2:-}" && "$2" =~ ^[0-9]+$ ]]; then
+        TIMEOUT="$2"
+        shift 2
+      else
+        echo "Error: --timeout requires a numeric argument." >&2
+        usage
+      fi
+      ;;
+    -*)
+      echo "Error: Unknown option $1" >&2
+      usage
+      ;;
+    *)
+      if [ -n "${FILE}" ]; then
+        echo "Error: Multiple files specified. Only one file is supported." >&2
+        usage
+      fi
+      FILE="$1"
+      shift
+      ;;
+  esac
+done
+
+if [[ -z "${FILE}" ]]; then
+  echo "Error: No filename provided." >&2
+  usage
+fi
+
+if [[ ! -f "${FILE}" ]]; then
+  echo "Error: File '${FILE}' does not exist." >&2
+  exit 1
+fi
+
+# --- Main ---
+
+if [[ "${SILENT}" == false ]]; then
+  echo "Uploading file '${FILE}' to VirusTotal..." >&2
+fi
+
+if ! SCAN_OUTPUT=$(vt scan file "${FILE}" 2>/dev/null); then
+  echo "Error: 'vt scan' failed. Check API key and network connection." >&2
+  exit 1
+fi
+
+ANALYSIS_ID=$(echo "${SCAN_OUTPUT}" | awk '{print $NF}')
+
+if [[ -z "${ANALYSIS_ID}" ]]; then
+  echo "Error: Failed to parse Analysis ID from 'vt scan' response." >&2
+  exit 1
+fi
+
+if [[ "${SILENT}" == false ]]; then
+  echo "Scan submitted. ID: ${ANALYSIS_ID}" >&2
+fi
+
+# --- Polling Loop with Timeout ---
+
+START_TIME=$SECONDS
+
+while true; do
+  ELAPSED=$(( SECONDS - START_TIME ))
+  if [[ "${ELAPSED}" -ge "${TIMEOUT}" ]]; then
+    echo -e "\nError: Analysis timed out after ${TIMEOUT}s." >&2
+    exit 2
+  fi
+
+  if ! ANALYSIS_RESULT=$(vt analysis "${ANALYSIS_ID}" --format json 2>/dev/null); then
+    echo "Error: Failed to query analysis status." >&2
+    exit 1
+  fi
+
+  STATUS=$(echo "$ANALYSIS_RESULT" | jq -r '.[0].status // "unknown"')
+
+  if [[ "${STATUS}" == "completed" ]]; then
+    if [[ "${SILENT}" == false ]]; then
+      echo -e "\nAnalysis completed." >&2
+    fi
+    echo "$ANALYSIS_RESULT" | jq '.[0].stats'
+    break
+
+  elif [[ "${STATUS}" == "queued" || "${STATUS}" == "unknown" || "${STATUS}" == "in_progress" ]]; then
+    if [[ "${SILENT}" == false ]]; then
+      echo -ne "Status: ${STATUS}... (Elapsed: ${ELAPSED}s/${TIMEOUT}s)\r" >&2
+    fi
+    sleep 5s
+  else
+    echo -e "\nError: Analysis ended with unexpected status: ${STATUS}" >&2
+    exit 1
+  fi
+done
