@@ -3,7 +3,7 @@
 set -eu -o pipefail
 
 usage() {
-  echo "Usage: $0 <filename> [-s|--silent] [-t|--timeout <seconds>]" >&2
+  echo "Usage: $(basename "$0") <filename> [-s|--silent] [-t|--timeout <seconds>] [-h|--help]" >&2
   exit 1
 }
 
@@ -25,6 +25,9 @@ while [[ $# -gt 0 ]]; do
         echo "Error: --timeout requires a numeric argument." >&2
         usage
       fi
+      ;;
+    -h|--help)
+      usage
       ;;
     -*)
       echo "Error: Unknown option $1" >&2
