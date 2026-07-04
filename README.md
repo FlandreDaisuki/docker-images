@@ -51,7 +51,7 @@ qrcode-encode() {
   fi
 
   docker run --rm -it \
-    --user "$(id -u):$(id -g)" \
+    -u "$(id -u):$(id -g)" \
     -v "$(pwd):/app" \
     ghcr.io/flandredaisuki/docker-images/qrcode \
     qrencode "${qrencode_options[@]}" "${text_to_encode}"
@@ -72,7 +72,7 @@ qrcode-decode() {
   fi
 
   docker run --rm -it \
-    --user "$(id -u):$(id -g)" \
+    -u "$(id -u):$(id -g)" \
     -v "$(dirname "${image_file}"):/app" \
     ghcr.io/flandredaisuki/docker-images/qrcode \
     zbarimg -q1 --raw --nodbus "/app/$(basename "${image_file}")"
@@ -84,6 +84,7 @@ qrcode-decode() {
 ```sh
 # run once for initialize
 docker run --rm -it \
+  -u "$(id -u):$(id -g)" \
   -v "$HOME:/home/user" \
   ghcr.io/flandredaisuki/docker-images/virustotal \
   vt init -k "${VT_API_KEY}"
@@ -102,6 +103,7 @@ alias vt-scan='docker run --rm -it \
 
 ```sh
 docker run --rm -it \
+  -u "$(id -u):$(id -g)" \
   -e BW_HOST='https://your-bitwarden-or-vaultwarden.site' \
   -e EMAIL='your@email' \
   -v ./PASSWORD:/tmp/XYZ:ro \
