@@ -6,6 +6,7 @@ My utility docker images
 - [gcloud-k9s](#gcloud-k9s)
 - [qrcode](#qrcode)
 - [virustotal](#virustotal)
+- [bw-cli](#bw-cli)
 
 ## extract
 
@@ -95,4 +96,20 @@ alias vt-scan='docker run --rm -it \
   -v "$(pwd):/app:ro" \
   ghcr.io/flandredaisuki/docker-images/virustotal \
   vt-scan'
+```
+
+## bw-cli
+
+```sh
+docker run --rm -it \
+  -e BW_HOST='https://your-bitwarden-or-vaultwarden.site' \
+  -e EMAIL='your@email' \
+  -v ./PASSWORD:/tmp/XYZ:ro \
+  -v ./backups:/backups \
+  ghcr.io/flandredaisuki/docker-images/bw-cli /bin/bash -c '
+    bw config server "$BW_HOST"
+    export BW_SESSION=$(bw login "$EMAIL" --passwordfile /tmp/XYZ --raw)
+    bw export --format json --output /backups/personal_backup.json --session "$BW_SESSION"
+    bw lock
+  '
 ```
