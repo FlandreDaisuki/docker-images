@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly PROGRAM_NAME="${0##*/}"
+PROGRAM_DIRECTORY="$(
+  cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
+  pwd
+)"
+readonly PROGRAM_DIRECTORY
+readonly PERL_HELPER="${PROGRAM_DIRECTORY}/update-github-actions.pl"
+
+usage() {
+  printf 'Usage: %s WORKFLOW_YAML\n' "${PROGRAM_NAME}" >&2
+}
+
+die() {
+  printf '%s: %s\n' "${PROGRAM_NAME}" "$*" >&2
+  exit 1
+}
+
+if (($# != 1)); then
+  usage
+  exit 2
+fi
+
+readonly workflow_path="$1"
+
+[[ -f "${workflow_path}" ]] || die "workflow not found: ${workflow_path}"
+[[ -r "${workflow_path}" ]] || die "workflow is not readable: ${workflow_path}"
+[[ -w "${workflow_path}" ]] || die "workflow is not writable: ${workflow_path}"
+
+for command_name in diff gh jq perl; do
+  command -v "${command_name}" >/dev/null 2>&1 ||
+    die "required command not found: ${command_name}"
+done
+
+[[ -r "${PERL_HELPER}" ]] || die "Perl helper not found: ${PERL_HELPER}"
+
+temporary_directory="$(mktemp -d)"
+readonly temporary_directory
+
+cleanup() {
+  if [[ -n "${temporary_directory}" && -d "${temporary_directory}" ]]; then
+    rm -rf -- "${temporary_directory}"
+  fi
+}
+trap cleanup EXIT
+
+readonly update_map="${temporary_directory}/updates.tsv"
+readonly updated_workflow="${temporary_directory}/workflow.yml"
+
+mapfile -t actions < <(
+  perl "${PERL_HELPER}" actions "${workflow_path}"
+)
+
+((${#actions[@]} > 0)) ||
+  die "no external GitHub actions found in ${workflow_path}"
+
+declare -A repository_release
+
+for action in "${actions[@]}"; do
+  IFS=/ read -r owner repository_name _ <<<"${action}"
+  repository="${owner}/${repository_name}"
+
+  if [[ ! -v "repository_release[${repository}]" ]]; then
+    printf 'Resolving latest stable release for %s...\n' "${repository}" >&2
+
+    release="$(
+      gh api --paginate "repos/${repository}/tags?per_page=100" |
+        jq -sr '
+          [
+            .[][]
+            | select(.name | test("^v?[0-9]+\\.[0-9]+\\.[0-9]+$"))
+            | {
+                tag: .name,
+                version: (
+                  .name
+                  | sub("^v"; "")
+                  | split(".")
+                  | map(tonumber)
+                ),
+                sha: .commit.sha
+              }
+          ]
+          | sort_by(.version)
+          | if length == 0
+            then empty
+            else last | [.tag, .sha] | @tsv
+            end
+        '
+    )"
+
+    [[ -n "${release}" ]] ||
+      die "no stable x.y.z tag found for ${repository}"
+
+    IFS=$'\t' read -r release_tag release_sha <<<"${release}"
+    [[ "${release_tag}" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]] ||
+      die "invalid release tag returned for ${repository}: ${release_tag}"
+    [[ "${release_sha}" =~ ^[0-9a-f]{40}$ ]] ||
+      die "invalid commit SHA returned for ${repository}: ${release_sha}"
+
+    repository_release["${repository}"]="${release_tag}"$'\t'"${release_sha}"
+  fi
+
+  IFS=$'\t' read -r release_tag release_sha \
+    <<<"${repository_release[${repository}]}"
+  printf '%s\t%s\t%s\n' "${action}" "${release_sha}" "${release_tag}" \
+    >>"${update_map}"
+done
+
+perl \
+  "${PERL_HELPER}" \
+  rewrite \
+  "${update_map}" \
+  "${workflow_path}" \
+  "${updated_workflow}"
+
+if cmp -s -- "${workflow_path}" "${updated_workflow}"; then
+  printf '%s is already up to date.\n' "${workflow_path}"
+  exit 0
+fi
+
+printf '\nProposed changes:\n\n'
+diff_status=0
+diff --color=always -u \
+  --label "${workflow_path} (current)" \
+  --label "${workflow_path} (updated)" \
+  "${workflow_path}" \
+  "${updated_workflow}" ||
+  diff_status=$?
+
+((diff_status == 1)) ||
+  die "could not generate diff"
+
+printf '\nApply these changes? [y/N] '
+read -r confirmation || confirmation=
+
+case "${confirmation}" in
+y | Y | yes | YES | Yes)
+  cp -- "${updated_workflow}" "${workflow_path}"
+  printf 'Updated %s\n' "${workflow_path}"
+  ;;
+*)
+  printf 'No changes applied.\n'
+  ;;
+esac

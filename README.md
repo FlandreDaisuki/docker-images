@@ -7,6 +7,7 @@ My utility docker images
 - [qrcode](#qrcode)
 - [virustotal](#virustotal)
 - [bw-cli](#bw-cli)
+- [update-github-actions](#update-github-actions)
 
 ## extract
 
@@ -114,4 +115,23 @@ docker run --rm -it \
     bw export --format json --output /backups/personal_backup.json --session "$BW_SESSION"
     bw lock
   '
+```
+
+## update-github-actions
+
+The GitHub CLI reads authentication from `GH_TOKEN`:
+
+```sh
+update-github-actions() {
+  docker run --rm -it \
+    -u "$(id -u):$(id -g)" \
+    -e "GH_TOKEN=$(gh auth token)" \
+    -v "$(pwd):/app" \
+    ghcr.io/flandredaisuki/docker-images/update-github-actions \
+    update-github-actions "$@"
+}
+```
+
+```sh
+update-github-actions .github/workflows/example.yml
 ```
