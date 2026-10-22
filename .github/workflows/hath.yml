@@ -1,0 +1,64 @@
+name: Build and publish HatH image
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - hath-v*
+    paths:
+      - hath/**
+      - .github/workflows/hath.yml
+  schedule:
+    - cron: '0 3 * * 3'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/hath
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@abd2ef45e78c5afb21d64d4ca52ee8550d9572c7
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c
+
+      - name: Set image tags and labels
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=false
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
+            type=match,pattern=hath-v(.*),group=1
+
+      - name: Build and push image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a
+        with:
+          context: ./hath
+          file: ./hath/Dockerfile
+          pull: true
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64

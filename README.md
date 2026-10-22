@@ -8,6 +8,7 @@ My utility docker images
 - [virustotal](#virustotal)
 - [bw-cli](#bw-cli)
 - [update-github-actions](#update-github-actions)
+- [hath](#hath)
 
 ## extract
 
@@ -135,3 +136,9 @@ update-github-actions() {
 ```sh
 update-github-actions .github/workflows/example.yml
 ```
+
+## hath
+
+This image runs Hentai@Home 1.6.5 with an updated Java 8 runtime. The build is based on [frosty5689/docker-hath](https://github.com/frosty5689/docker-hath).
+
+The workflow publishes `ghcr.io/flandredaisuki/docker-images/hath:latest` when `master` changes. It also rebuilds the image each week to get base image updates. A `hath-v1.6.5` tag publishes image tag `1.6.5`.
