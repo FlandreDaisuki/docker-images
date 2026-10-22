@@ -139,6 +139,20 @@ update-github-actions .github/workflows/example.yml
 
 ## hath
 
-This image runs Hentai@Home 1.6.5 with an updated Java 8 runtime. The build is based on [frosty5689/docker-hath](https://github.com/frosty5689/docker-hath).
+The build is based on [frosty5689/docker-hath](https://github.com/frosty5689/docker-hath) and replace the deprecated base image `openjdk:8u212-jre-alpine` with `eclipse-temurin:8-jre-alpine`, however `eclipse-temurin:8-jre-alpine` has only an `amd64` build.
 
-The `8-jre-alpine` base image has only an `amd64` build. To add `arm64` support, use a Temurin base image with an `arm64` build and add that platform to the workflow.
+```sh
+docker run \
+  --name hath \
+  --user "$(id -u):$(id -g)" \
+  -v /path/to/your/hath/cache:/hath/cache \
+  -v /path/to/your/hath/data:/hath/data \
+  -v /path/to/your/hath/download>:/hath/download \
+  -v /path/to/your/hath/log:/hath/log \
+  -v /path/to/your/hath/tmp:/hath/tmp \
+  -e "HATH_CLIENT_ID=${HATH_CLIENT_ID}" \
+  -e "HATH_CLIENT_KEY=${HATH_CLIENT_KEY}" \
+  -e "TZ=${TZ}" \
+  -p "${HATH_PORT}/tcp" \
+  ghcr.io/flandredaisuki/docker-images/hath
+```
