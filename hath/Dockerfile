@@ -4,6 +4,7 @@ FROM eclipse-temurin:8-jre-alpine
 LABEL maintainer="FlandreDaisuki <github@flandre.tw>"
 
 ARG HATH_VERSION=1.6.5
+LABEL hath.client.version="${HATH_VERSION}"
 
 RUN apk add --no-cache ca-certificates tzdata libgcc \
  && update-ca-certificates \

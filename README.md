@@ -141,6 +141,4 @@ update-github-actions .github/workflows/example.yml
 
 This image runs Hentai@Home 1.6.5 with an updated Java 8 runtime. The build is based on [frosty5689/docker-hath](https://github.com/frosty5689/docker-hath).
 
-The workflow publishes `ghcr.io/flandredaisuki/docker-images/hath:latest` when `master` changes. It also rebuilds the image each week to get base image updates. A `hath-v1.6.5` tag publishes image tag `1.6.5`.
-
 The `8-jre-alpine` base image has only an `amd64` build. To add `arm64` support, use a Temurin base image with an `arm64` build and add that platform to the workflow.

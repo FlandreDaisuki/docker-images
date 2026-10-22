@@ -2,16 +2,8 @@ name: Build and publish HatH image
 
 on:
   push:
-    branches:
-      - master
     tags:
       - hath-v*
-    paths:
-      - hath/**
-      - .github/workflows/hath.yml
-  schedule:
-    - cron: '0 3 * * 3'
-  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -27,33 +19,39 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        # aka actions/checkout@v7.0.1
 
       - name: Log in to the Container registry
-        uses: docker/login-action@abd2ef45e78c5afb21d64d4ca52ee8550d9572c7
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
+        # aka docker/login-action@v4.6.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1
+        # aka docker/setup-qemu-action@v4.4.0
 
       - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
+        # aka docker/setup-buildx-action@v4.4.1
 
       - name: Set image tags and labels
         id: meta
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302
+        # aka docker/metadata-action@v6.2.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
             latest=false
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
+            type=raw,value=latest
             type=match,pattern=hath-v(.*),group=1
 
       - name: Build and push image
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
+        # aka docker/build-push-action@v7.4.0
         with:
           context: ./hath
           file: ./hath/Dockerfile
